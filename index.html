@@ -5,13 +5,8 @@
 <title>Simulasi GLB Kejar-kejaran</title>
 
 <style>
-    canvas {
-        border: 1px solid black;
-        margin-top: 10px;
-    }
-    button {
-        margin-right: 5px;
-    }
+    canvas { border:1px solid black; margin-top:10px }
+    .rumus { background:#f4f4f4; padding:10px; margin-top:10px }
 </style>
 </head>
 
@@ -19,17 +14,14 @@
 
 <h2>Simulasi Kejar-kejaran Dua Benda (GLB)</h2>
 
-<label>Posisi awal A (m):</label>
-<input id="xA" type="number" value="0"><br><br>
+Posisi awal A (m): <input id="xA0" value="0"><br><br>
+Kecepatan A (m/s): <input id="vA" value="1"><br><br>
+Posisi awal B (m): <input id="xB0" value="15"><br><br>
+Kecepatan B (m/s): <input id="vB" value="0.5"><br><br>
 
-<label>Kecepatan A (m/s):</label>
-<input id="vA" type="number" value="2"><br><br>
-
-<label>Posisi awal B (m):</label>
-<input id="xB" type="number" value="10"><br><br>
-
-<label>Kecepatan B (m/s):</label>
-<input id="vB" type="number" value="1"><br><br>
+<label>
+<input type="checkbox" id="slow"> 🐢 Slow Motion
+</label><br><br>
 
 <button onclick="mulai()">▶ Play</button>
 <button onclick="pause()">⏸ Pause</button>
@@ -37,128 +29,106 @@
 
 <p id="hasil"></p>
 
-<canvas id="kanvas" width="700" height="150"></canvas>
-<canvas id="grafik" width="700" height="200"></canvas>
+<canvas id="kanvas" width="800" height="150"></canvas>
+
+<div class="rumus" id="rumus"></div>
 
 <script>
-let animasi;
-let jalan = false;
+let ctx = document.getElementById("kanvas").getContext("2d");
+let animasi, jalan=false;
 
-let xA, vA, xB, vB, t;
-let dt = 0.03;
+let xA0, xB0, vA, vB;
+let xA, xB, t;
+let skala = 35;
 
-const skala = 40;
-const canvas = document.getElementById("kanvas");
-const ctx = canvas.getContext("2d");
+function mulai(){
+    if(jalan) return;
 
-const grafik = document.getElementById("grafik");
-const gtx = grafik.getContext("2d");
+    xA0 = parseFloat(xA0 = document.getElementById("xA0").value);
+    xB0 = parseFloat(document.getElementById("xB0").value);
+    vA  = parseFloat(document.getElementById("vA").value);
+    vB  = parseFloat(document.getElementById("vB").value);
 
-let dataT = [];
-let dataJ = [];
-
-function mulai() {
-    if (jalan) return;
-
-    xA = parseFloat(document.getElementById("xA").value);
-    vA = parseFloat(document.getElementById("vA").value);
-    xB = parseFloat(document.getElementById("xB").value);
-    vB = parseFloat(document.getElementById("vB").value);
-
-    if (xA >= xB || vA <= vB) {
-        document.getElementById("hasil").innerHTML =
-            "<b style='color:red'>A harus di belakang dan lebih cepat dari B!</b>";
+    if(xA0>=xB0 || vA<=vB){
+        hasil.innerHTML="❌ A harus di belakang dan lebih cepat";
         return;
     }
 
-    t = 0;
-    dataT = [];
-    dataJ = [];
+    xA = xA0;
+    xB = xB0;
+    t  = 0;
     jalan = true;
-    animasi = requestAnimationFrame(gambar);
+    gambar();
 }
 
-function pause() {
-    jalan = false;
+function pause(){ jalan=false; }
+
+function reset(){
+    jalan=false;
+    ctx.clearRect(0,0,800,150);
+    hasil.innerHTML="";
+    rumus.innerHTML="";
 }
 
-function reset() {
-    cancelAnimationFrame(animasi);
-    jalan = false;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    gtx.clearRect(0,0,grafik.width,grafik.height);
-    document.getElementById("hasil").innerHTML = "";
-}
+function gambar(){
+    if(!jalan) return;
 
-function gambar() {
-    if (!jalan) return;
+    ctx.clearRect(0,0,800,150);
 
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let slow = document.getElementById("slow").checked;
+    let dt = slow ? 0.005 : 0.02;
 
     // lintasan
     ctx.beginPath();
     ctx.moveTo(20,75);
-    ctx.lineTo(canvas.width-20,75);
-    ctx.strokeStyle = "#aaa";
+    ctx.lineTo(780,75);
+    ctx.strokeStyle="#aaa";
     ctx.stroke();
 
-    // A
-    ctx.beginPath();
-    ctx.arc(xA*skala+50,75,12,0,Math.PI*2);
-    ctx.fillStyle = "red";
-    ctx.fill();
-    ctx.fillText("A", xA*skala+45,50);
+    let jarak = xB-xA;
 
-    // B
-    ctx.beginPath();
-    ctx.arc(xB*skala+50,75,12,0,Math.PI*2);
-    ctx.fillStyle = "blue";
-    ctx.fill();
-    ctx.fillText("B", xB*skala+45,50);
+    // efek menyatu
+    if(jarak<=0.2){
+        ctx.beginPath();
+        ctx.arc(xA*skala+50,75,16,0,Math.PI*2);
+        ctx.fillStyle="purple";
+        ctx.fill();
 
-    let jarak = xB - xA;
-    ctx.fillStyle = "black";
-    ctx.fillText("t = "+t.toFixed(2)+" s | jarak = "+jarak.toFixed(2)+" m", 10,20);
-
-    // simpan data grafik
-    dataT.push(t);
-    dataJ.push(jarak);
-    gambarGrafik();
-
-    if (jarak <= 0.05) {
-        document.getElementById("hasil").innerHTML =
-            "🎯 <b>Bertemu!</b><br>Waktu = <b>"+t.toFixed(2)+" s</b><br>Posisi = <b>"+xA.toFixed(2)+" m</b>";
-        jalan = false;
+        hasil.innerHTML =
+        "🧲 <b>BERTEMU & MENYATU</b><br>"+
+        "t = "+t.toFixed(2)+" s<br>"+
+        "x = "+xA.toFixed(2)+" m";
+        jalan=false;
         return;
     }
 
+    // benda A
+    ctx.beginPath();
+    ctx.arc(xA*skala+50,75,12,0,Math.PI*2);
+    ctx.fillStyle="red";
+    ctx.fill();
+    ctx.fillText("A",xA*skala+45,50);
+
+    // benda B
+    ctx.beginPath();
+    ctx.arc(xB*skala+50,75,12,0,Math.PI*2);
+    ctx.fillStyle="blue";
+    ctx.fill();
+    ctx.fillText("B",xB*skala+45,50);
+
+    // rumus berjalan
+    rumus.innerHTML = `
+    <b>Rumus GLB:</b><br>
+    x<sub>A</sub> = ${xA0} + ${vA}·${t.toFixed(2)} = <b>${xA.toFixed(2)}</b><br>
+    x<sub>B</sub> = ${xB0} + ${vB}·${t.toFixed(2)} = <b>${xB.toFixed(2)}</b><br>
+    Syarat bertemu: x<sub>A</sub> = x<sub>B</sub>
+    `;
+
     xA += vA*dt;
     xB += vB*dt;
-    t += dt;
+    t  += dt;
 
-    animasi = requestAnimationFrame(gambar);
-}
-
-function gambarGrafik() {
-    gtx.clearRect(0,0,grafik.width,grafik.height);
-
-    gtx.beginPath();
-    gtx.moveTo(40,10);
-    gtx.lineTo(40,180);
-    gtx.lineTo(680,180);
-    gtx.stroke();
-
-    gtx.beginPath();
-    for (let i=0;i<dataT.length;i++) {
-        let x = 40 + dataT[i]*40;
-        let y = 180 - dataJ[i]*10;
-        if (i===0) gtx.moveTo(x,y);
-        else gtx.lineTo(x,y);
-    }
-    gtx.strokeStyle = "green";
-    gtx.stroke();
-
-    gtx.fillText("Grafik Jarak vs Waktu", 280,15);
+    animasi=requestAnimationFrame(gambar);
 }
 </script>
 
