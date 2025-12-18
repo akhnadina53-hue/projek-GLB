@@ -2,133 +2,140 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Simulasi GLB Kejar-kejaran</title>
+<title>Simulasi GLB – Kotak Persegi Panjang</title>
 
 <style>
-    canvas { border:1px solid black; margin-top:10px }
-    .rumus { background:#f4f4f4; padding:10px; margin-top:10px }
+    canvas {
+        border: 1px solid black;
+        margin-top: 10px;
+    }
+    #rumus {
+        background: #f4f4f4;
+        padding: 10px;
+        margin-top: 10px;
+    }
 </style>
 </head>
 
 <body>
 
-<h2>Simulasi Kejar-kejaran Dua Benda (GLB)</h2>
+<h2>Simulasi Kejar-kejaran GLB (Kotak Persegi Panjang)</h2>
 
-Posisi awal A (m): <input id="xA0" value="0"><br><br>
-Kecepatan A (m/s): <input id="vA" value="1"><br><br>
-Posisi awal B (m): <input id="xB0" value="15"><br><br>
-Kecepatan B (m/s): <input id="vB" value="0.5"><br><br>
+<label>x₀ A (m):</label>
+<input id="xA" type="number" value="0"><br><br>
 
-<label>
-<input type="checkbox" id="slow"> 🐢 Slow Motion
-</label><br><br>
+<label>v A (m/s):</label>
+<input id="vA" type="number" value="1"><br><br>
+
+<label>x₀ B (m):</label>
+<input id="xB" type="number" value="12"><br><br>
+
+<label>v B (m/s):</label>
+<input id="vB" type="number" value="0.5"><br><br>
 
 <button onclick="mulai()">▶ Play</button>
-<button onclick="pause()">⏸ Pause</button>
 <button onclick="reset()">🔄 Reset</button>
 
 <p id="hasil"></p>
 
-<canvas id="kanvas" width="800" height="150"></canvas>
+<canvas id="kanvas" width="800" height="180"></canvas>
 
-<div class="rumus" id="rumus"></div>
+<div id="rumus"></div>
 
 <script>
-let ctx = document.getElementById("kanvas").getContext("2d");
-let animasi, jalan=false;
+const canvas = document.getElementById("kanvas");
+const ctx = canvas.getContext("2d");
 
-let xA0, xB0, vA, vB;
-let xA, xB, t;
-let skala = 35;
+let xA0, xB0, xA, xB, vA, vB, t;
+let jalan = false;
+let animasi;
+let skala = 40;
+let lebar = 40;
+let tinggi = 30;
 
-function mulai(){
-    if(jalan) return;
+function mulai() {
+    xA0 = xA = parseFloat(document.getElementById("xA").value);
+    vA = parseFloat(document.getElementById("vA").value);
+    xB0 = xB = parseFloat(document.getElementById("xB").value);
+    vB = parseFloat(document.getElementById("vB").value);
 
-    xA0 = parseFloat(xA0 = document.getElementById("xA0").value);
-    xB0 = parseFloat(document.getElementById("xB0").value);
-    vA  = parseFloat(document.getElementById("vA").value);
-    vB  = parseFloat(document.getElementById("vB").value);
-
-    if(xA0>=xB0 || vA<=vB){
-        hasil.innerHTML="❌ A harus di belakang dan lebih cepat";
+    if (xA >= xB || vA <= vB) {
+        hasil.innerHTML = "<b style='color:red'>A harus di belakang dan lebih cepat dari B</b>";
         return;
     }
 
-    xA = xA0;
-    xB = xB0;
-    t  = 0;
+    t = 0;
     jalan = true;
-    gambar();
+    animasi = requestAnimationFrame(gambar);
 }
 
-function pause(){ jalan=false; }
-
-function reset(){
-    jalan=false;
-    ctx.clearRect(0,0,800,150);
-    hasil.innerHTML="";
-    rumus.innerHTML="";
+function reset() {
+    cancelAnimationFrame(animasi);
+    jalan = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    hasil.innerHTML = "";
+    rumus.innerHTML = "";
 }
 
-function gambar(){
-    if(!jalan) return;
+function gambar() {
+    if (!jalan) return;
 
-    ctx.clearRect(0,0,800,150);
+    let dt = (xB - xA < 1) ? 0.005 : 0.02; // slow motion saat dekat
 
-    let slow = document.getElementById("slow").checked;
-    let dt = slow ? 0.005 : 0.02;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // lintasan
-    ctx.beginPath();
-    ctx.moveTo(20,75);
-    ctx.lineTo(780,75);
-    ctx.strokeStyle="#aaa";
-    ctx.stroke();
+    ctx.fillStyle = "#ddd";
+    ctx.fillRect(20, 80, canvas.width - 40, 20);
 
-    let jarak = xB-xA;
+    let jarak = xB - xA;
 
-    // efek menyatu
-    if(jarak<=0.2){
-        ctx.beginPath();
-        ctx.arc(xA*skala+50,75,16,0,Math.PI*2);
-        ctx.fillStyle="purple";
-        ctx.fill();
+    // posisi pixel
+    let pxA = xA * skala + 40;
+    let pxB = xB * skala + 40;
+
+    // jika bertemu → menyatu
+    if (pxA + lebar >= pxB) {
+        ctx.fillStyle = "purple";
+        ctx.fillRect(pxB, 65, lebar, tinggi);
 
         hasil.innerHTML =
-        "🧲 <b>BERTEMU & MENYATU</b><br>"+
-        "t = "+t.toFixed(2)+" s<br>"+
-        "x = "+xA.toFixed(2)+" m";
-        jalan=false;
+            "🧲 <b>A dan B bertemu & menyatu</b><br>" +
+            "t = <b>" + t.toFixed(2) + " s</b>";
+
+        jalan = false;
         return;
     }
 
-    // benda A
-    ctx.beginPath();
-    ctx.arc(xA*skala+50,75,12,0,Math.PI*2);
-    ctx.fillStyle="red";
-    ctx.fill();
-    ctx.fillText("A",xA*skala+45,50);
+    // kotak A (merah)
+    ctx.fillStyle = "red";
+    ctx.fillRect(pxA, 65, lebar, tinggi);
+    ctx.fillStyle = "white";
+    ctx.fillText("A", pxA + 15, 85);
 
-    // benda B
-    ctx.beginPath();
-    ctx.arc(xB*skala+50,75,12,0,Math.PI*2);
-    ctx.fillStyle="blue";
-    ctx.fill();
-    ctx.fillText("B",xB*skala+45,50);
+    // kotak B (biru)
+    ctx.fillStyle = "blue";
+    ctx.fillRect(pxB, 65, lebar, tinggi);
+    ctx.fillStyle = "white";
+    ctx.fillText("B", pxB + 15, 85);
+
+    // info
+    ctx.fillStyle = "black";
+    ctx.fillText(`t = ${t.toFixed(2)} s | jarak = ${jarak.toFixed(2)} m`, 10, 20);
 
     // rumus berjalan
     rumus.innerHTML = `
     <b>Rumus GLB:</b><br>
-    x<sub>A</sub> = ${xA0} + ${vA}·${t.toFixed(2)} = <b>${xA.toFixed(2)}</b><br>
-    x<sub>B</sub> = ${xB0} + ${vB}·${t.toFixed(2)} = <b>${xB.toFixed(2)}</b><br>
-    Syarat bertemu: x<sub>A</sub> = x<sub>B</sub>
+    x<sub>A</sub> = ${xA0} + ${vA}t = <b>${xA.toFixed(2)}</b><br>
+    x<sub>B</sub> = ${xB0} + ${vB}t = <b>${xB.toFixed(2)}</b>
     `;
 
-    xA += vA*dt;
-    xB += vB*dt;
-    t  += dt;
+    // update posisi
+    xA += vA * dt;
+    xB += vB * dt;
+    t += dt;
 
-    animasi=requestAnimationFrame(gambar);
+    animasi = requestAnimationFrame(gambar);
 }
 </script>
 
