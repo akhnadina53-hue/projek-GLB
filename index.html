@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulasi Kejar-kejaran Dua Benda (GLB)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        input {
+            width: 80px;
+            margin: 5px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 6px 12px;
+        }
+        canvas {
+            max-width: 800px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Simulasi Kejar-kejaran Dua Benda (GLB)</h2>
+
+<label>Posisi awal A (m):</label>
+<input id="xA0" type="number" value="0"><br>
+
+<label>Kecepatan A (m/s):</label>
+<input id="vA" type="number" value="2"><br>
+
+<label>Posisi awal B (m):</label>
+<input id="xB0" type="number" value="10"><br>
+
+<label>Kecepatan B (m/s):</label>
+<input id="vB" type="number" value="1"><br>
+
+<button onclick="simulasi()">Jalankan Simulasi</button>
+
+<p id="hasil"></p>
+
+<canvas id="grafik"></canvas>
+
+<script>
+function simulasi() {
+    let xA = parseFloat(xA0.value);
+    let vA = parseFloat(vA.value);
+    let xB = parseFloat(xB0.value);
+    let vB = parseFloat(vB.value);
+
+    let dt = 0.1;
+    let t = 0;
+
+    let waktu = [];
+    let posA = [];
+    let posB = [];
+
+    let bertemu = false;
+    let t_temu = 0;
+    let x_temu = 0;
+
+    while (t <= 20) {
+        waktu.push(t.toFixed(2));
+        posA.push(xA);
+        posB.push(xB);
+
+        if (Math.abs(xA - xB) < 0.05) {
+            bertemu = true;
+            t_temu = t;
+            x_temu = (xA + xB) / 2;
+            break;
+        }
+
+        xA += vA * dt;
+        xB += vB * dt;
+        t += dt;
+    }
+
+    if (bertemu) {
+        hasil.innerHTML =
+            `Benda bertemu pada t ≈ ${t_temu.toFixed(2)} s, x ≈ ${x_temu.toFixed(2)} m`;
+    } else {
+        hasil.innerHTML = "Kedua benda tidak bertemu.";
+    }
+
+    new Chart(grafik, {
+        type: 'line',
+        data: {
+            labels: waktu,
+            datasets: [
+                {
+                    label: 'Benda A',
+                    data: posA,
+                    borderWidth: 2
+                },
+                {
+                    label: 'Benda B',
+                    data: posB,
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Waktu (s)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Posisi (m)'
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+
+</body>
+</html>
