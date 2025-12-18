@@ -2,126 +2,88 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Simulasi Kejar-kejaran Dua Benda (GLB)</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Simulasi GLB</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
-        }
-        input {
-            width: 80px;
-            margin: 5px;
-        }
-        button {
-            margin-top: 10px;
-            padding: 6px 12px;
-        }
         canvas {
-            max-width: 800px;
-            margin-top: 30px;
+            border: 1px solid black;
+            margin-top: 20px;
         }
     </style>
 </head>
 
 <body>
 
-<h2>Simulasi Kejar-kejaran Dua Benda (GLB)</h2>
+<h1>Simulasi Kejar-kejaran Dua Benda (GLB)</h1>
 
 <label>Posisi awal A (m):</label>
-<input id="xA0" type="number" value="0"><br>
+<input id="xA" type="number" value="0"><br><br>
 
 <label>Kecepatan A (m/s):</label>
-<input id="vA" type="number" value="2"><br>
+<input id="vA" type="number" value="2"><br><br>
 
 <label>Posisi awal B (m):</label>
-<input id="xB0" type="number" value="10"><br>
+<input id="xB" type="number" value="10"><br><br>
 
 <label>Kecepatan B (m/s):</label>
-<input id="vB" type="number" value="1"><br>
+<input id="vB" type="number" value="1"><br><br>
 
-<button onclick="simulasi()">Jalankan Simulasi</button>
+<button onclick="simulasi()">Simulasikan</button>
 
 <p id="hasil"></p>
 
-<canvas id="grafik"></canvas>
+<canvas id="kanvas" width="600" height="150"></canvas>
 
 <script>
+let animasi;
+
 function simulasi() {
-    let xA = parseFloat(xA0.value);
-    let vA = parseFloat(vA.value);
-    let xB = parseFloat(xB0.value);
-    let vB = parseFloat(vB.value);
+    cancelAnimationFrame(animasi);
 
-    let dt = 0.1;
+    let xA = parseFloat(document.getElementById("xA").value);
+    let vA = parseFloat(document.getElementById("vA").value);
+    let xB = parseFloat(document.getElementById("xB").value);
+    let vB = parseFloat(document.getElementById("vB").value);
+
     let t = 0;
+    let dt = 0.05;
 
-    let waktu = [];
-    let posA = [];
-    let posB = [];
+    const canvas = document.getElementById("kanvas");
+    const ctx = canvas.getContext("2d");
 
-    let bertemu = false;
-    let t_temu = 0;
-    let x_temu = 0;
+    const skala = 30; // 1 meter = 30 pixel
 
-    while (t <= 20) {
-        waktu.push(t.toFixed(2));
-        posA.push(xA);
-        posB.push(xB);
+    function gambar() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Gambar benda A (merah)
+        ctx.beginPath();
+        ctx.arc(xA * skala + 50, 75, 10, 0, Math.PI * 2);
+        ctx.fillStyle = "red";
+        ctx.fill();
+
+        // Gambar benda B (biru)
+        ctx.beginPath();
+        ctx.arc(xB * skala + 50, 75, 10, 0, Math.PI * 2);
+        ctx.fillStyle = "blue";
+        ctx.fill();
+
+        // Cek bertemu
         if (Math.abs(xA - xB) < 0.05) {
-            bertemu = true;
-            t_temu = t;
-            x_temu = (xA + xB) / 2;
-            break;
+            document.getElementById("hasil").innerHTML =
+                "Benda bertemu pada waktu <b>" + t.toFixed(2) +
+                " s</b> di posisi <b>" + ((xA + xB) / 2).toFixed(2) + " m</b>";
+            return;
         }
 
+        // Update posisi
         xA += vA * dt;
         xB += vB * dt;
         t += dt;
+
+        animasi = requestAnimationFrame(gambar);
     }
 
-    if (bertemu) {
-        hasil.innerHTML =
-            `Benda bertemu pada t ≈ ${t_temu.toFixed(2)} s, x ≈ ${x_temu.toFixed(2)} m`;
-    } else {
-        hasil.innerHTML = "Kedua benda tidak bertemu.";
-    }
-
-    new Chart(grafik, {
-        type: 'line',
-        data: {
-            labels: waktu,
-            datasets: [
-                {
-                    label: 'Benda A',
-                    data: posA,
-                    borderWidth: 2
-                },
-                {
-                    label: 'Benda B',
-                    data: posB,
-                    borderWidth: 2
-                }
-            ]
-        },
-        options: {
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Waktu (s)'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Posisi (m)'
-                    }
-                }
-            }
-        }
-    });
+    gambar();
 }
 </script>
 
